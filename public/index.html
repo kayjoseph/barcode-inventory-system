@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barcode Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">▦</span>
+      <span class="logo-text">BarcodeMgr</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-view="items">
+        <span class="nav-icon">☰</span> Items
+      </a>
+      <a href="#" class="nav-item" data-view="scan">
+        <span class="nav-icon">⌖</span> Scanner
+      </a>
+    </nav>
+    <div class="sidebar-footer">v1.0.0</div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- HEADER -->
+    <header class="topbar">
+      <div>
+        <h1 class="page-title" id="pageTitle">Items</h1>
+        <p class="page-sub" id="pageSub">Manage your inventory and barcode labels</p>
+      </div>
+      <button class="btn btn-primary" id="btnAddItem">+ Add Item</button>
+    </header>
+
+    <!-- ── ITEMS VIEW ───────────────────────────────────────────── -->
+    <section id="viewItems" class="view active">
+
+      <!-- Search bar -->
+      <div class="toolbar">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by name or SKU…" />
+        <span id="itemCount" class="item-count"></span>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Item Name</th>
+              <th>SKU / Barcode</th>
+              <th>Price (KES)</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTableBody">
+            <tr><td colspan="6" class="empty-row">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SCANNER VIEW ─────────────────────────────────────────── -->
+    <section id="viewScan" class="view">
+      <div class="scan-card">
+        <p class="scan-label">Scan or enter a barcode / SKU</p>
+        <div class="scan-row">
+          <input type="text" id="scanInput" class="scan-input" placeholder="Scan barcode here…" autofocus />
+          <button class="btn btn-primary" id="btnScan">Look up</button>
+        </div>
+        <div id="scanResult" class="scan-result hidden"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── MODAL: ADD / EDIT ITEM ───────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Add Item</h2>
+        <button class="modal-close" id="btnCloseModal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="editItemId" />
+
+        <div class="form-group">
+          <label for="fieldName">Item Name <span class="required">*</span></label>
+          <input type="text" id="fieldName" placeholder="e.g. 32-page single lined book" />
+        </div>
+
+        <div class="form-group">
+          <label for="fieldSku">
+            SKU / Barcode
+            <span class="optional">(optional — leave blank to auto-generate)</span>
+          </label>
+          <input type="text" id="fieldSku" placeholder="e.g. 6281234567890 or BOOK-32PG" />
+        </div>
+
+        <div class="form-group">
+          <label for="fieldPrice">Price (KES)</label>
+          <input type="number" id="fieldPrice" placeholder="e.g. 50" min="0" step="0.01" />
+        </div>
+
+        <div id="formError" class="form-error hidden"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCancelModal">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveItem">Save Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: LABEL PREVIEW / PRINT ─────────────────────────────── -->
+  <div class="modal-overlay hidden" id="printModalOverlay">
+    <div class="modal modal-print">
+      <div class="modal-header">
+        <h2 class="modal-title">Print Label</h2>
+        <button class="modal-close" id="btnClosePrintModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="label-preview" id="labelPreview">
+          <div class="label-name" id="labelName"></div>
+          <div class="label-price" id="labelPrice"></div>
+          <img id="labelBarcodeImg" src="" alt="barcode" />
+          <div class="label-sku" id="labelSku"></div>
+        </div>
+        <div class="print-options">
+          <label>Copies</label>
+          <input type="number" id="printCopies" value="1" min="1" max="100" style="width:70px;" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCancelPrint">Cancel</button>
+        <button class="btn btn-primary" id="btnPrint">🖨 Print</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PRINT FRAME (hidden) ─────────────────────────────────────── -->
+  <div id="printFrame" style="display:none;"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
