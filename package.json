@@ -1,0 +1,18 @@
+{
+  "name": "barcode-app",
+  "version": "1.0.0",
+  "description": "Barcode label generator and printer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bwip-js": "*",
+    "express": "^4.18.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
