@@ -2,11 +2,8 @@ const { Pool } = require('pg');
 
 // ── Update these with your PostgreSQL credentials ──────────────────────────
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'barcode_db',   // change to your database name
-  user: 'postgres',         // change to your PostgreSQL username
-  password: 'yourpassword', // change to your PostgreSQL password
+  connectionString: 'postgresql://postgres:(WINQUORS4017)@db.ogweqevpjdygsatbftyj.supabase.co:5432/postgres',
+  ssl: { rejectUnauthorized: false }
 });
 // ───────────────────────────────────────────────────────────────────────────
 
