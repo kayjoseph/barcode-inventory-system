@@ -1,6 +1,5 @@
 const express = require('express');
 const path    = require('path');
-const db      = require('./db');
 const { generateEAN13, generateBarcodeImage } = require('./barcode');
 
 const app  = express();
@@ -9,102 +8,81 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ── IN-MEMORY STORE ──────────────────────────────────────────────────────────
+let items  = [];
+let nextId = 1;
+
 // ── ITEMS API ────────────────────────────────────────────────────────────────
 
 // GET all items
-app.get('/api/items', async (req, res) => {
-  try {
-    const items = await db.getAllItems();
-    res.json(items);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET single item by ID
-app.get('/api/items/:id', async (req, res) => {
-  try {
-    const item = await db.getItemById(req.params.id);
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    res.json(item);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+app.get('/api/items', (req, res) => {
+  res.json([...items].reverse());
 });
 
 // GET item by SKU — for scanner lookup
-app.get('/api/scan/:sku', async (req, res) => {
-  try {
-    const item = await db.getItemBySku(req.params.sku);
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    res.json(item);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+app.get('/api/scan/:sku', (req, res) => {
+  const item = items.find(i => i.sku === req.params.sku);
+  if (!item) return res.status(404).json({ error: 'Item not found' });
+  res.json(item);
 });
 
 // POST create new item
-app.post('/api/items', async (req, res) => {
-  try {
-    let { name, sku, price } = req.body;
+app.post('/api/items', (req, res) => {
+  let { name, sku, price } = req.body;
 
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ error: 'Item name is required' });
-    }
-
-    // Auto-generate SKU/barcode if not provided
-    if (!sku || sku.trim() === '') {
-      sku = generateEAN13();
-    }
-
-    const item = await db.createItem({ name: name.trim(), sku: sku.trim(), price: price || 0 });
-    res.status(201).json(item);
-  } catch (err) {
-    if (err.code === '23505') {
-      res.status(400).json({ error: 'That SKU/barcode already exists. Please use a different one.' });
-    } else {
-      res.status(500).json({ error: err.message });
-    }
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Item name is required' });
   }
+
+  // Auto-generate SKU if not provided
+  if (!sku || sku.trim() === '') {
+    sku = generateEAN13();
+  }
+
+  // Check duplicate SKU
+  if (items.find(i => i.sku === sku.trim())) {
+    return res.status(400).json({ error: 'That SKU/barcode already exists.' });
+  }
+
+  const item = {
+    id:         nextId++,
+    name:       name.trim(),
+    sku:        sku.trim(),
+    price:      parseFloat(price) || 0,
+    created_at: new Date().toISOString(),
+  };
+
+  items.push(item);
+  res.status(201).json(item);
 });
 
 // PUT update item
-app.put('/api/items/:id', async (req, res) => {
-  try {
-    let { name, sku, price } = req.body;
+app.put('/api/items/:id', (req, res) => {
+  const id   = parseInt(req.params.id);
+  const idx  = items.findIndex(i => i.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Item not found' });
 
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ error: 'Item name is required' });
-    }
-    if (!sku || sku.trim() === '') {
-      return res.status(400).json({ error: 'SKU is required' });
-    }
+  let { name, sku, price } = req.body;
+  if (!name || name.trim() === '') return res.status(400).json({ error: 'Item name is required' });
+  if (!sku  || sku.trim()  === '') return res.status(400).json({ error: 'SKU is required' });
 
-    const item = await db.updateItem(req.params.id, { name: name.trim(), sku: sku.trim(), price: price || 0 });
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    res.json(item);
-  } catch (err) {
-    if (err.code === '23505') {
-      res.status(400).json({ error: 'That SKU/barcode already exists on another item.' });
-    } else {
-      res.status(500).json({ error: err.message });
-    }
+  // Check duplicate SKU on another item
+  if (items.find(i => i.sku === sku.trim() && i.id !== id)) {
+    return res.status(400).json({ error: 'That SKU already exists on another item.' });
   }
+
+  items[idx] = { ...items[idx], name: name.trim(), sku: sku.trim(), price: parseFloat(price) || 0 };
+  res.json(items[idx]);
 });
 
 // DELETE item
-app.delete('/api/items/:id', async (req, res) => {
-  try {
-    await db.deleteItem(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+app.delete('/api/items/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  items    = items.filter(i => i.id !== id);
+  res.json({ success: true });
 });
 
-// ── BARCODE IMAGE API ─────────────────────────────────────────────────────────
-
-// GET barcode image for a given SKU
+// ── BARCODE IMAGE ────────────────────────────────────────────────────────────
 app.get('/api/barcode/:sku', async (req, res) => {
   try {
     const image = await generateBarcodeImage(req.params.sku);
@@ -114,16 +92,8 @@ app.get('/api/barcode/:sku', async (req, res) => {
   }
 });
 
-// ── START SERVER ─────────────────────────────────────────────────────────────
-
-db.initDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Barcode app running at http://localhost:${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('❌ Failed to connect to database:', err.message);
-    console.error('   Check your credentials in db.js');
-    process.exit(1);
-  });
+// ── START ────────────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`✅ Barcode app running at http://localhost:${PORT}`);
+  console.log(`   Note: data is stored in memory and will reset when the server stops.`);
+});
