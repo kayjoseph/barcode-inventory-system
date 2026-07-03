@@ -18,6 +18,9 @@
       <a href="#" class="nav-item active" data-view="items">
         <span class="nav-icon">☰</span> Items
       </a>
+      <a href="#" class="nav-item" data-view="labels">
+        <span class="nav-icon">🏷️</span> Label Print
+      </a>
       <a href="#" class="nav-item" data-view="scan">
         <span class="nav-icon">⌖</span> Scanner
       </a>
@@ -34,26 +37,22 @@
         <h1 class="page-title" id="pageTitle">Items</h1>
         <p class="page-sub" id="pageSub">Manage your inventory and barcode labels</p>
       </div>
-      <button class="btn btn-primary" id="btnAddItem">+ Add Item</button>
+      <button class="btn btn-primary" id="btnAddItem" style="display:none;">+ Add Item</button>
     </header>
 
     <!-- ── ITEMS VIEW ───────────────────────────────────────────── -->
     <section id="viewItems" class="view active">
-
-      <!-- Search bar -->
       <div class="toolbar">
         <input type="text" id="searchInput" class="search-input" placeholder="Search by name or SKU…" />
         <span id="itemCount" class="item-count"></span>
       </div>
-
-      <!-- Table -->
       <div class="table-wrap">
         <table class="items-table">
           <thead>
             <tr>
               <th>#</th>
-              <th>SKU / Barcode</th>
               <th>Item Name</th>
+              <th>SKU / Barcode</th>
               <th>Price (KES)</th>
               <th>Created</th>
               <th>Actions</th>
@@ -66,12 +65,99 @@
       </div>
     </section>
 
+    <!-- ── LABEL PRINT VIEW ─────────────────────────────────────── -->
+    <section id="viewLabels" class="view">
+      <div class="lp-layout">
+
+        <!-- LEFT: controls -->
+        <div class="lp-panel">
+
+          <div class="lp-section">
+            <p class="lp-section-title">1 · Select Item</p>
+            <input type="text" id="lpSearch" class="search-input"
+              placeholder="Search by name or SKU…" style="width:100%;margin-bottom:10px;" />
+            <div class="lp-item-list" id="lpItemList">
+              <p class="lp-empty">No items yet — add some in Items first.</p>
+            </div>
+          </div>
+
+          <div class="lp-section" id="lpSettingsPanel" style="margin-top:20px;">
+            <p class="lp-section-title">2 · Print Settings</p>
+
+            <div class="lp-setting-row">
+              <label>Copies</label>
+              <div class="qty-control">
+                <button class="qty-btn" id="qtyMinus">−</button>
+                <input type="number" id="lpCopies" value="1" min="1" max="500" />
+                <button class="qty-btn" id="qtyPlus">+</button>
+              </div>
+            </div>
+
+            <div class="lp-setting-row">
+              <label>Label size</label>
+              <select id="lpLabelSize">
+                <option value="small">Small (50×25mm)</option>
+                <option value="medium" selected>Medium (80×40mm)</option>
+                <option value="large">Large (100×60mm)</option>
+              </select>
+            </div>
+
+            <div class="lp-setting-row">
+              <label>Labels per row</label>
+              <select id="lpPerRow">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+
+            <div class="lp-setting-row">
+              <label>Show item name</label>
+              <input type="checkbox" id="lpShowName" checked style="width:auto;cursor:pointer;" />
+            </div>
+
+            <div class="lp-setting-row">
+              <label>Show price</label>
+              <input type="checkbox" id="lpShowPrice" checked style="width:auto;cursor:pointer;" />
+            </div>
+
+            <div class="lp-setting-row">
+              <label>Show SKU number</label>
+              <input type="checkbox" id="lpShowSku" checked style="width:auto;cursor:pointer;" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="btnPrintLabels"
+            style="width:100%;margin-top:20px;font-size:15px;padding:12px;" disabled>
+            🖨&nbsp; Print Labels
+          </button>
+          <p class="lp-note" id="lpNote">Select an item above to get started.</p>
+        </div>
+
+        <!-- RIGHT: live preview -->
+        <div class="lp-preview-panel">
+          <div class="lp-preview-header">
+            <p class="lp-section-title">3 · Preview</p>
+            <span id="lpCopiesDisplay" class="lp-copies-badge"></span>
+          </div>
+          <div class="lp-preview-area" id="lpPreviewArea">
+            <div class="lp-preview-empty">
+              <span style="font-size:48px;">🏷️</span>
+              <p>Select an item on the left to preview labels</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- ── SCANNER VIEW ─────────────────────────────────────────── -->
     <section id="viewScan" class="view">
       <div class="scan-card">
-        <p class="scan-label">Scan or enter a barcode / SKU</p>
+        <p class="scan-label">Scan or enter a barcode / SKU to look up an item</p>
         <div class="scan-row">
-          <input type="text" id="scanInput" class="scan-input" placeholder="Scan barcode here…" autofocus />
+          <input type="text" id="scanInput" class="scan-input" placeholder="Scan barcode here…" />
           <button class="btn btn-primary" id="btnScan">Look up</button>
         </div>
         <div id="scanResult" class="scan-result hidden"></div>
@@ -87,15 +173,12 @@
         <h2 class="modal-title" id="modalTitle">Add Item</h2>
         <button class="modal-close" id="btnCloseModal">✕</button>
       </div>
-
       <div class="modal-body">
         <input type="hidden" id="editItemId" />
-
         <div class="form-group">
           <label for="fieldName">Item Name <span class="required">*</span></label>
           <input type="text" id="fieldName" placeholder="e.g. 32-page single lined book" />
         </div>
-
         <div class="form-group">
           <label for="fieldSku">
             SKU / Barcode
@@ -103,50 +186,18 @@
           </label>
           <input type="text" id="fieldSku" placeholder="e.g. 6281234567890 or BOOK-32PG" />
         </div>
-
         <div class="form-group">
           <label for="fieldPrice">Price (KES)</label>
           <input type="number" id="fieldPrice" placeholder="e.g. 50" min="0" step="0.01" />
         </div>
-
         <div id="formError" class="form-error hidden"></div>
       </div>
-
       <div class="modal-footer">
         <button class="btn btn-ghost" id="btnCancelModal">Cancel</button>
         <button class="btn btn-primary" id="btnSaveItem">Save Item</button>
       </div>
     </div>
   </div>
-
-  <!-- ── MODAL: LABEL PREVIEW / PRINT ─────────────────────────────── -->
-  <div class="modal-overlay hidden" id="printModalOverlay">
-    <div class="modal modal-print">
-      <div class="modal-header">
-        <h2 class="modal-title">Print Label</h2>
-        <button class="modal-close" id="btnClosePrintModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="label-preview" id="labelPreview">
-          <div class="label-name" id="labelName"></div>
-          <div class="label-price" id="labelPrice"></div>
-          <img id="labelBarcodeImg" src="" alt="barcode" />
-          <div class="label-sku" id="labelSku"></div>
-        </div>
-        <div class="print-options">
-          <label>Copies</label>
-          <input type="number" id="printCopies" value="1" min="1" max="100" style="width:70px;" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" id="btnCancelPrint">Cancel</button>
-        <button class="btn btn-primary" id="btnPrint">🖨 Print</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── PRINT FRAME (hidden) ─────────────────────────────────────── -->
-  <div id="printFrame" style="display:none;"></div>
 
   <script src="app.js"></script>
 </body>
