@@ -300,10 +300,10 @@ function printLabels() {
   const showSku  = lpShowSku.checked;
 
   const sizes = {
-    small:  { w: '50mm',  h: '25mm', namePx: 9,  pricePx: 8,  skuPx: 7  },
-    medium: { w: '80mm',  h: '40mm', namePx: 12, pricePx: 11, skuPx: 9  },
-    large:  { w: '100mm', h: '60mm', namePx: 15, pricePx: 13, skuPx: 11 },
-  };
+  small:  { w: '50.8mm', h: '38mm',   namePx: 10, pricePx: 9,  skuPx: 8  },
+  medium: { w: '50.8mm', h: '57mm',   namePx: 12, pricePx: 11, skuPx: 9  },
+  large:  { w: '50.8mm', h: '76.2mm', namePx: 14, pricePx: 12, skuPx: 10 },
+};
   const s = sizes[size];
 
   const oneLabel = `
