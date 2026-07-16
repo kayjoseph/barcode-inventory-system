@@ -292,84 +292,87 @@ btnPrintLabels.addEventListener('click', printLabels);
 function printLabels() {
   if (!lpSelectedItem || !lpBarcodeImg) return;
 
-  const copies   = parseInt(lpCopies.value) || 1;
-  const size     = lpLabelSize.value;
-  const perRow   = parseInt(lpPerRow.value) || 2;
-  const showName = lpShowName.checked;
-  const showPrice= lpShowPrice.checked;
-  const showSku  = lpShowSku.checked;
+  const copies    = parseInt(lpCopies.value) || 1;
+  const size      = lpLabelSize.value;
+  const showName  = lpShowName.checked;
+  const showPrice = lpShowPrice.checked;
+  const showSku   = lpShowSku.checked;
 
   const sizes = {
-  small:  { w: '50.8mm', h: '38mm',   namePx: 10, pricePx: 9,  skuPx: 8  },
-  medium: { w: '50.8mm', h: '57mm',   namePx: 12, pricePx: 11, skuPx: 9  },
-  large:  { w: '50.8mm', h: '76.2mm', namePx: 14, pricePx: 12, skuPx: 10 },
-};
+    small:  { w: '50.8mm', h: '38mm',   namePx: 10, pricePx: 9,  skuPx: 8  },
+    medium: { w: '50.8mm', h: '57mm',   namePx: 12, pricePx: 11, skuPx: 9  },
+    large:  { w: '50.8mm', h: '76.2mm', namePx: 14, pricePx: 12, skuPx: 10 },
+  };
   const s = sizes[size];
 
   const oneLabel = `
     <div class="label">
-      ${showName  ? `<div class="l-name">${esc(lpSelectedItem.name)}</div>` : ''}
+      ${showName  ? `<div class="l-name">${esc(lpSelectedItem.name)}</div>`  : ''}
       ${showPrice ? `<div class="l-price">KES ${parseFloat(lpSelectedItem.price).toFixed(2)}</div>` : ''}
       <img src="${lpBarcodeImg}" alt="barcode" />
-      ${showSku   ? `<div class="l-sku">${esc(lpSelectedItem.sku)}</div>` : ''}
+      ${showSku   ? `<div class="l-sku">${esc(lpSelectedItem.sku)}</div>`   : ''}
     </div>
   `;
 
   const allLabels = Array.from({ length: copies }, () => oneLabel).join('');
 
-  const win = window.open('', '_blank', 'width=800,height=600');
-  win.document.write(`
-    <!DOCTYPE html><html>
-    <head>
-      <title>Print — ${esc(lpSelectedItem.name)} × ${copies}</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  // Inject a hidden print container into the current page
+  let printContainer = document.getElementById('printContainer');
+  if (printContainer) printContainer.remove();
 
-        @page {
-          size: 50.8mm 76.2mm;
-          margin: 0;
-        }
+  printContainer = document.createElement('div');
+  printContainer.id = 'printContainer';
+  printContainer.innerHTML = allLabels;
+  document.body.appendChild(printContainer);
 
-        body {
-          font-family: Arial, sans-serif;
-          background: white;
-          margin: 0;
-          padding: 0;
-          width: 50.8mm;
-        }
+  // Inject print styles
+  let printStyle = document.getElementById('printStyle');
+  if (printStyle) printStyle.remove();
 
-        .label {
-          width: 50.8mm;
-          height: 76.2mm;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          padding: 3mm 2mm;
-          gap: 2mm;
-          overflow: hidden;
-          page-break-after: always;
-        }
+  printStyle = document.createElement('style');
+  printStyle.id = 'printStyle';
+  printStyle.textContent = `
+    @media print {
+      @page {
+        size: 50.8mm 76.2mm;
+        margin: 0;
+      }
+      body > *:not(#printContainer) { display: none !important; }
+      #printContainer {
+        display: block !important;
+        width: 50.8mm;
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+      #printContainer .label {
+        width: 50.8mm;
+        height: 76.2mm;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 3mm 2mm;
+        gap: 2mm;
+        overflow: hidden;
+        page-break-after: always;
+        box-sizing: border-box;
+      }
+      #printContainer .label:last-child { page-break-after: avoid; }
+      #printContainer .l-name  { font-size: ${s.namePx}px; font-weight: 700; line-height: 1.3; font-family: Arial, sans-serif; }
+      #printContainer .l-price { font-size: ${s.pricePx}px; color: #333; font-family: Arial, sans-serif; }
+      #printContainer .l-sku   { font-size: ${s.skuPx}px; color: #555; font-family: monospace; letter-spacing: .5px; }
+      #printContainer img      { max-width: 88%; max-height: 35mm; object-fit: contain; display: block; margin: 0 auto; }
+    }
+    #printContainer { display: none; }
+  `;
+  document.head.appendChild(printStyle);
 
-        .label:last-child { page-break-after: avoid; }
-
-        .l-name  { font-size: ${s.namePx}px; font-weight: 700; line-height: 1.3; }
-        .l-price { font-size: ${s.pricePx}px; color: #333; }
-        .l-sku   { font-size: ${s.skuPx}px; color: #555; font-family: monospace; letter-spacing: .5px; }
-        img      { max-width: 88%; max-height: 35mm; object-fit: contain; }
-      </style>
-    </head>
-    <body>
-      <div>${allLabels}</div>
-      <script>
-        window.onload = () => {
-          setTimeout(() => window.print(), 400);
-        };
-      <\/script>
-    </body></html>
-  `);
-  win.document.close();
+  // Trigger print
+  setTimeout(() => {
+    window.print();
+  }, 300);
 }
 
 // ── SCANNER ───────────────────────────────────────────────────────────────
