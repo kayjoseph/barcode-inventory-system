@@ -324,37 +324,49 @@ function printLabels() {
       <title>Print — ${esc(lpSelectedItem.name)} × ${copies}</title>
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: white; }
-        .wrap {
-          display: grid;
-          grid-template-columns: repeat(${perRow}, ${s.w});
-          gap: 6px;
-          padding: 10px;
+
+        @page {
+          size: 50.8mm 76.2mm;
+          margin: 0;
         }
+
+        body {
+          font-family: Arial, sans-serif;
+          background: white;
+          margin: 0;
+          padding: 0;
+          width: 50.8mm;
+        }
+
         .label {
-          width: ${s.w}; height: ${s.h};
-          border: 1px dashed #999;
-          border-radius: 4px;
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
+          width: 50.8mm;
+          height: 76.2mm;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
           text-align: center;
-          padding: 4px 6px;
-          gap: 2px;
+          padding: 3mm 2mm;
+          gap: 2mm;
           overflow: hidden;
+          page-break-after: always;
         }
-        .l-name  { font-size: ${s.namePx}px; font-weight: 700; line-height: 1.2; }
+
+        .label:last-child { page-break-after: avoid; }
+
+        .l-name  { font-size: ${s.namePx}px; font-weight: 700; line-height: 1.3; }
         .l-price { font-size: ${s.pricePx}px; color: #333; }
         .l-sku   { font-size: ${s.skuPx}px; color: #555; font-family: monospace; letter-spacing: .5px; }
-        img      { max-width: 90%; max-height: 40%; object-fit: contain; }
-        @media print {
-          body { margin: 0; }
-          .wrap { gap: 4px; padding: 6px; }
-        }
+        img      { max-width: 88%; max-height: 35mm; object-fit: contain; }
       </style>
     </head>
     <body>
-      <div class="wrap">${allLabels}</div>
-      <script>window.onload = () => setTimeout(() => window.print(), 400);<\/script>
+      <div>${allLabels}</div>
+      <script>
+        window.onload = () => {
+          setTimeout(() => window.print(), 400);
+        };
+      <\/script>
     </body></html>
   `);
   win.document.close();
