@@ -10,9 +10,21 @@
   "dependencies": {
     "bwip-js": "*",
     "express": "^4.18.2",
-    "pg": "^8.11.3"
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kayjoseph/barcode-inventory-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kayjoseph/barcode-inventory-system/issues"
+  },
+  "homepage": "https://github.com/kayjoseph/barcode-inventory-system#readme"
 }
