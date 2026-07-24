@@ -31,3 +31,24 @@ app.get('/api/scan/:sku', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// POST create new item
+app.post('/api/items', async (req, res) => {
+  try {
+    let { name, sku, price } = req.body;
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Item name is required' });
+    }
+    if (!sku || sku.trim() === '') {
+      sku = generateEAN13();
+    }
+    const item = await db.createItem({ name: name.trim(), sku: sku.trim(), price: parseFloat(price) || 0 });
+    res.status(201).json(item);
+  } catch (err) {
+    if (err.code === '23505') {
+      res.status(400).json({ error: 'That SKU/barcode already exists.' });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
+  }
+});
