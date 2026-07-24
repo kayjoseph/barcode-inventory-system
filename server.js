@@ -70,3 +70,35 @@ app.put('/api/items/:id', async (req, res) => {
     }
   }
 });
+
+// DELETE item
+app.delete('/api/items/:id', async (req, res) => {
+  try {
+    await db.deleteItem(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── BARCODE IMAGE ─────────────────────────────────────────────────────────────
+app.get('/api/barcode/:sku', async (req, res) => {
+  try {
+    const image = await generateBarcodeImage(req.params.sku);
+    res.json({ image });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── START ─────────────────────────────────────────────────────────────────────
+db.initDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Barcode app running at http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Failed to connect to database:', err.message);
+    process.exit(1);
+  });
