@@ -52,3 +52,21 @@ app.post('/api/items', async (req, res) => {
     }
   }
 });
+
+// PUT update item
+app.put('/api/items/:id', async (req, res) => {
+  try {
+    let { name, sku, price } = req.body;
+    if (!name || name.trim() === '') return res.status(400).json({ error: 'Item name is required' });
+    if (!sku  || sku.trim()  === '') return res.status(400).json({ error: 'SKU is required' });
+    const item = await db.updateItem(req.params.id, { name: name.trim(), sku: sku.trim(), price: parseFloat(price) || 0 });
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    res.json(item);
+  } catch (err) {
+    if (err.code === '23505') {
+      res.status(400).json({ error: 'That SKU already exists on another item.' });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
+  }
+});
